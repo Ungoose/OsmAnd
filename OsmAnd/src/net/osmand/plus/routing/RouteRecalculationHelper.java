@@ -6,6 +6,7 @@ import net.osmand.Location;
 import net.osmand.data.LatLon;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
+import net.osmand.plus.routing.GPXRouteParams.GPXRouteParamsBuilder;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.settings.backend.OsmandSettings;
 import net.osmand.router.RouteCalculationProgress;
@@ -179,7 +180,7 @@ class RouteRecalculationHelper {
 	}
 
 	public void recalculateRouteInBackground(final Location start, final LatLon end, final List<LatLon> intermediates,
-											 final RouteProvider.GPXRouteParamsBuilder gpxRoute, final RouteCalculationResult previousRoute, boolean paramsChanged, boolean onlyStartPointChanged) {
+											 final GPXRouteParamsBuilder gpxRoute, final RouteCalculationResult previousRoute, boolean paramsChanged, boolean onlyStartPointChanged) {
 		if (start == null || end == null) {
 			return;
 		}

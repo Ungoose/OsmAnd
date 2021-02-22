@@ -46,7 +46,7 @@ import net.osmand.plus.routepreparationmenu.RoutingOptionsHelper.OtherSettingsRo
 import net.osmand.plus.routepreparationmenu.RoutingOptionsHelper.RouteSimulationItem;
 import net.osmand.plus.routepreparationmenu.RoutingOptionsHelper.ShowAlongTheRouteItem;
 import net.osmand.plus.routepreparationmenu.RoutingOptionsHelper.TimeConditionalRoutingItem;
-import net.osmand.plus.routing.RouteProvider;
+import net.osmand.plus.routing.GPXRouteParams.GPXRouteParamsBuilder;
 import net.osmand.plus.routing.RouteService;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.settings.backend.ApplicationMode;
@@ -502,7 +502,7 @@ public class RouteOptionsBottomSheet extends MenuBottomSheetDialogFragment {
 	}
 
 	private BaseBottomSheetItem createGpxRoutingItem(final LocalRoutingParameter optionsItem) {
-		RouteProvider.GPXRouteParamsBuilder routeParamsBuilder = mapActivity.getRoutingHelper().getCurrentGPXRoute();
+		GPXRouteParamsBuilder routeParamsBuilder = mapActivity.getRoutingHelper().getCurrentGPXRoute();
 		String description = null;
 		int descriptionColorId;
 		if (routeParamsBuilder == null) {

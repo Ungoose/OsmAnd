@@ -16,8 +16,6 @@ import net.osmand.PlatformUtil;
 import net.osmand.ResultMatcher;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.data.LatLon;
-import net.osmand.data.LocationPoint;
-import net.osmand.data.WptLocationPoint;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.TargetPointsHelper;
@@ -70,207 +68,13 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import btools.routingapp.IBRouterService;
 
-import static net.osmand.router.RouteExporter.OSMAND_ROUTER_V2;
-
 
 public class RouteProvider {
 
 	private static final org.apache.commons.logging.Log log = PlatformUtil.getLog(RouteProvider.class);
-	private static final String OSMAND_ROUTER = "OsmAndRouter";
 	private static final int MIN_DISTANCE_FOR_INSERTING_ROUTE_SEGMENT = 60;
 	private static final int ADDITIONAL_DISTANCE_FOR_START_POINT = 300;
 	private static final int MIN_STRAIGHT_DIST = 50000;
-
-	public static class GPXRouteParamsBuilder {
-		boolean calculateOsmAndRoute = false;
-		// parameters
-		private final GPXFile file;
-		private boolean reverse;
-		private boolean leftSide;
-		private boolean passWholeRoute;
-		private boolean calculateOsmAndRouteParts;
-		private int selectedSegment = -1;
-
-		public GPXRouteParamsBuilder(GPXFile file, OsmandSettings settings) {
-			leftSide = settings.DRIVING_REGION.get().leftHandDriving;
-			this.file = file;
-		}
-
-		public boolean isReverse() {
-			return reverse;
-		}
-
-		public boolean isCalculateOsmAndRouteParts() {
-			return calculateOsmAndRouteParts;
-		}
-
-		public void setCalculateOsmAndRouteParts(boolean calculateOsmAndRouteParts) {
-			this.calculateOsmAndRouteParts = calculateOsmAndRouteParts;
-		}
-
-		public boolean isUseIntermediatePointsRTE() {
-			return file.hasRtePt() && !file.hasTrkPt();
-		}
-
-		public boolean isCalculateOsmAndRoute() {
-			return calculateOsmAndRoute;
-		}
-
-		public void setCalculateOsmAndRoute(boolean calculateOsmAndRoute) {
-			this.calculateOsmAndRoute = calculateOsmAndRoute;
-		}
-
-		public int getSelectedSegment() {
-			return selectedSegment;
-		}
-
-		public void setSelectedSegment(int selectedSegment) {
-			this.selectedSegment = selectedSegment;
-		}
-
-		public void setPassWholeRoute(boolean passWholeRoute) {
-			this.passWholeRoute = passWholeRoute;
-		}
-
-		public boolean isPassWholeRoute() {
-			return passWholeRoute;
-		}
-
-		public GPXRouteParams build(OsmandApplication app) {
-			GPXRouteParams res = new GPXRouteParams();
-			try {
-				res.prepareGPXFile(this);
-			} catch (RuntimeException e) {
-				log.error(e.getMessage(), e);
-				app.showShortToastMessage(app.getString(R.string.gpx_parse_error) + " " + e.getMessage());
-			}
-			return res;
-		}
-
-		public void setReverse(boolean reverse) {
-			this.reverse = reverse;
-		}
-
-		public GPXFile getFile() {
-			return file;
-		}
-
-		public List<Location> getPoints(OsmandApplication app) {
-			GPXRouteParams copy = build(app);
-			return copy.getPoints();
-		}
-	}
-
-	public static class GPXRouteParams {
-		List<Location> points = new ArrayList<>();
-		List<RouteDirectionInfo> directions;
-		List<RouteSegmentResult> route;
-		List<WptPt> routePoints = new ArrayList<>();
-		boolean reverse;
-		boolean calculateOsmAndRoute;
-		boolean passWholeRoute;
-		boolean calculateOsmAndRouteParts;
-		boolean useIntermediatePointsRTE;
-		private List<LocationPoint> wpt;
-
-		boolean addMissingTurns = true;
-
-		public List<Location> getPoints() {
-			return points;
-		}
-
-		public Location getStartPointForRoute(){
-			if(!points.isEmpty()){
-				return points.get(0);
-			}
-			return null;
-		}
-
-		public Location getEndPointForRoute(){
-			if(!points.isEmpty()){
-				return points.get(points.size());
-			}
-			return null;
-		}
-
-		public LatLon getLastPoint() {
-			if(!points.isEmpty()){
-				Location l = points.get(points.size() - 1);
-				LatLon point = new LatLon(l.getLatitude(), l.getLongitude());
-				return point;
-			}
-			return null;
-		}
-
-		public GPXRouteParams prepareGPXFile(GPXRouteParamsBuilder builder) {
-			GPXFile file = builder.file;
-			reverse = builder.reverse;
-			passWholeRoute = builder.passWholeRoute;
-			calculateOsmAndRouteParts = builder.calculateOsmAndRouteParts;
-			useIntermediatePointsRTE = builder.isUseIntermediatePointsRTE();
-			builder.calculateOsmAndRoute = false; // Disabled temporary builder.calculateOsmAndRoute;
-			if (!file.isPointsEmpty()) {
-				wpt = new ArrayList<LocationPoint>(file.getPoints().size());
-				for(WptPt w : file.getPoints()) {
-					wpt.add(new WptLocationPoint(w));
-				}
-			}
-			int selectedSegment = builder.getSelectedSegment();
-			if (OSMAND_ROUTER_V2.equals(file.author)) {
-				route = parseOsmAndGPXRoute(points, file, selectedSegment);
-				if (selectedSegment == -1) {
-					routePoints = file.getRoutePoints();
-				} else {
-					routePoints = file.getRoutePoints(selectedSegment);
-				}
-				if (reverse) {
-					Collections.reverse(points);
-					Collections.reverse(routePoints);
-				}
-				addMissingTurns = route != null && route.isEmpty();
-			} else if (file.isCloudmadeRouteFile() || OSMAND_ROUTER.equals(file.author)) {
-				directions = parseOsmAndGPXRoute(points, file, OSMAND_ROUTER.equals(file.author), builder.leftSide, 10, selectedSegment);
-				if (OSMAND_ROUTER.equals(file.author) && file.hasRtePt()) {
-					// For files generated by OSMAND_ROUTER use directions contained unaltered
-					addMissingTurns = false;
-				}
-				if (reverse) {
-					// clear directions all turns should be recalculated
-					directions = null;
-					Collections.reverse(points);
-					addMissingTurns = true;
-				}
-			} else {
-				// first of all check tracks
-				if (!useIntermediatePointsRTE) {
-					List<TrkSegment> segments = file.getNonEmptyTrkSegments(false);
-					if (selectedSegment != -1 && segments.size() > selectedSegment) {
-						TrkSegment segment = segments.get(selectedSegment);
-						for (WptPt p : segment.points) {
-							points.add(createLocation(p));
-						}
-					} else {
-						for (TrkSegment tkSeg : segments) {
-							for (WptPt p : tkSeg.points) {
-								points.add(createLocation(p));
-							}
-						}
-					}
-				}
-				if (points.isEmpty()) {
-					for (Route rte : file.routes) {
-						for (WptPt pt : rte.points) {
-							points.add(createLocation(pt));
-						}
-					}
-				}
-				if (reverse) {
-					Collections.reverse(points);
-				}
-			}
-			return this;
-		}
-	}
 
 	public static Location createLocation(WptPt pt){
 		Location loc = new Location("OsmandRouteProvider");
@@ -941,7 +745,7 @@ public class RouteProvider {
 		return new RouteCalculationResult("Empty result");
 	}
 
-	private static List<RouteSegmentResult> parseOsmAndGPXRoute(List<Location> points, GPXFile gpxFile, int selectedSegment) {
+	protected static List<RouteSegmentResult> parseOsmAndGPXRoute(List<Location> points, GPXFile gpxFile, int selectedSegment) {
 		List<TrkSegment> segments = gpxFile.getNonEmptyTrkSegments(false);
 		if (selectedSegment != -1 && segments.size() > selectedSegment) {
 			TrkSegment segment = segments.get(selectedSegment);
@@ -961,8 +765,8 @@ public class RouteProvider {
 		}
 	}
 
-	private static List<RouteDirectionInfo> parseOsmAndGPXRoute(List<Location> points, GPXFile gpxFile, boolean osmandRouter,
-																boolean leftSide, float defSpeed, int selectedSegment) {
+	protected static List<RouteDirectionInfo> parseOsmAndGPXRoute(List<Location> points, GPXFile gpxFile, boolean osmandRouter,
+																  boolean leftSide, float defSpeed, int selectedSegment) {
 		List<RouteDirectionInfo> directions = null;
 		if (!osmandRouter) {
 			for (WptPt pt : gpxFile.getPoints()) {
