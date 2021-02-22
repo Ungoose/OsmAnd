@@ -37,9 +37,8 @@ import net.osmand.plus.dashboard.DashboardOnMap;
 import net.osmand.plus.download.DownloadActivity;
 import net.osmand.plus.download.DownloadActivityType;
 import net.osmand.plus.helpers.FileNameTranslationHelper;
-import net.osmand.plus.routing.RouteProvider;
 import net.osmand.plus.routing.RouteProvider.GPXRouteParamsBuilder;
-import net.osmand.plus.routing.RouteProvider.RouteService;
+import net.osmand.plus.routing.RouteService;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.voice.JSMediaCommandPlayerImpl;
@@ -458,7 +457,7 @@ public class RoutingOptionsHelper {
 	public List<LocalRoutingParameter> getOsmandRouterParameters(ApplicationMode am) {
 		OsmandSettings settings = app.getSettings();
 		List<LocalRoutingParameter> list = new ArrayList<LocalRoutingParameter>();
-		boolean osmandRouter = am.getRouteService() == RouteProvider.RouteService.OSMAND;
+		boolean osmandRouter = am.getRouteService() == RouteService.OSMAND;
 		if (!osmandRouter) {
 			list.add(new OtherLocalRoutingParameter(R.string.calculate_osmand_route_without_internet,
 					app.getString(R.string.calculate_osmand_route_without_internet), settings.GPX_ROUTE_CALC_OSMAND_PARTS.get()));
@@ -490,7 +489,7 @@ public class RoutingOptionsHelper {
 	}
 
 	public List<LocalRoutingParameter> getRoutingParametersInner(ApplicationMode am) {
-		boolean osmandRouter = am.getRouteService() == RouteProvider.RouteService.OSMAND;
+		boolean osmandRouter = am.getRouteService() == RouteService.OSMAND;
 		if (!osmandRouter) {
 			return getOsmandRouterParameters(am);
 		}
@@ -1061,7 +1060,7 @@ public class RoutingOptionsHelper {
 
 	private List<String> getRoutingParametersForProfileType(ApplicationMode appMode) {
 		if (appMode != null) {
-			boolean osmandRouter = appMode.getRouteService() == RouteProvider.RouteService.OSMAND;
+			boolean osmandRouter = appMode.getRouteService() == RouteService.OSMAND;
 			if (!osmandRouter) {
 				return PermanentAppModeOptions.OTHER.routingParameters;
 			} else if (appMode.isDerivedRoutingFrom(ApplicationMode.CAR)) {

@@ -74,83 +74,12 @@ import static net.osmand.router.RouteExporter.OSMAND_ROUTER_V2;
 
 
 public class RouteProvider {
+
 	private static final org.apache.commons.logging.Log log = PlatformUtil.getLog(RouteProvider.class);
 	private static final String OSMAND_ROUTER = "OsmAndRouter";
 	private static final int MIN_DISTANCE_FOR_INSERTING_ROUTE_SEGMENT = 60;
 	private static final int ADDITIONAL_DISTANCE_FOR_START_POINT = 300;
 	private static final int MIN_STRAIGHT_DIST = 50000;
-
-	public enum RouteService {
-		OSMAND("OsmAnd (offline)"),
-		BROUTER("BRouter (offline)"),
-		STRAIGHT("Straight line"),
-		DIRECT_TO("Direct To"),
-		ONLINE("Online engine");
-
-		private final String name;
-
-		RouteService(String name) {
-			this.name = name;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public boolean isOnline() {
-			return this != OSMAND && this != BROUTER;
-		}
-
-		boolean isAvailable(OsmandApplication ctx) {
-			if (this == BROUTER) {
-				return ctx.getBRouterService() != null;
-			}
-			return true;
-		}
-
-		public static RouteService[] getAvailableRouters(OsmandApplication ctx) {
-			List<RouteService> list = new ArrayList<>();
-			for (RouteService r : values()) {
-				if (r.isAvailable(ctx)) {
-					list.add(r);
-				}
-			}
-			return list.toArray(new RouteService[0]);
-		}
-	}
-
-	public static class RoutingEnvironment {
-		private RoutePlannerFrontEnd router;
-		private RoutingContext ctx;
-		private RoutingContext complexCtx;
-		private PrecalculatedRouteDirection precalculated;
-
-		public RoutingEnvironment(RoutePlannerFrontEnd router, RoutingContext ctx, RoutingContext complexCtx, PrecalculatedRouteDirection precalculated) {
-			this.router = router;
-			this.ctx = ctx;
-			this.complexCtx = complexCtx;
-			this.precalculated = precalculated;
-		}
-
-		public RoutePlannerFrontEnd getRouter() {
-			return router;
-		}
-
-		public RoutingContext getCtx() {
-			return ctx;
-		}
-
-		public RoutingContext getComplexCtx() {
-			return complexCtx;
-		}
-
-		public PrecalculatedRouteDirection getPrecalculated() {
-			return precalculated;
-		}
-	}
-
-	public RouteProvider() {
-	}
 
 	public static class GPXRouteParamsBuilder {
 		boolean calculateOsmAndRoute = false;
@@ -788,11 +717,11 @@ public class RouteProvider {
 	}
 
 	public List<GpxPoint> generateGpxPoints(RoutingEnvironment env, GpxRouteApproximation gctx, LocationsHolder locationsHolder) {
-		return env.router.generateGpxPoints(gctx, locationsHolder);
+		return env.getRouter().generateGpxPoints(gctx, locationsHolder);
 	}
 
 	public GpxRouteApproximation calculateGpxPointsApproximation(RoutingEnvironment env, GpxRouteApproximation gctx, List<GpxPoint> points, ResultMatcher<GpxRouteApproximation> resultMatcher) throws IOException, InterruptedException {
-		return env.router.searchGpxRoute(gctx, points, resultMatcher);
+		return env.getRouter().searchGpxRoute(gctx, points, resultMatcher);
 	}
 
 	protected RoutingEnvironment calculateRoutingEnvironment(RouteCalculationParams params, boolean calcGPXRoute, boolean skipComplex) throws IOException {
@@ -885,7 +814,7 @@ public class RouteProvider {
 		if (params.intermediates != null) {
 			inters = new ArrayList<LatLon>(params.intermediates);
 		}
-		return calcOfflineRouteImpl(params, env.router, env.ctx, env.complexCtx, st, en, inters, env.precalculated);
+		return calcOfflineRouteImpl(params, env.getRouter(), env.getCtx(), env.getComplexCtx(), st, en, inters, env.getPrecalculated());
 	}
 
 	private RoutingConfiguration initOsmAndRoutingConfig(Builder config, final RouteCalculationParams params, OsmandSettings settings,
@@ -1378,6 +1307,4 @@ public class RouteProvider {
 		}
 		return new RouteCalculationResult(segments, computeDirections, params, null, false);
 	}
-
-
 }

@@ -30,8 +30,7 @@ import net.osmand.plus.OsmAndFormatter;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.UiUtilities;
-import net.osmand.plus.Version;
-import net.osmand.plus.routing.RouteProvider;
+import net.osmand.plus.routing.RouteService;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.settings.backend.BooleanPreference;
@@ -228,7 +227,7 @@ public class RouteParametersFragment extends BaseSettingsFragment implements OnP
 		fastRoute.setSummaryOn(R.string.shared_string_on);
 		fastRoute.setSummaryOff(R.string.shared_string_off);
 
-		if (am.getRouteService() == RouteProvider.RouteService.OSMAND) {
+		if (am.getRouteService() == RouteService.OSMAND) {
 			GeneralRouter router = app.getRouter(am);
 			clearParameters();
 			if (router != null) {
@@ -307,10 +306,10 @@ public class RouteParametersFragment extends BaseSettingsFragment implements OnP
 				}
 			}
 			setupTimeConditionalRoutingPref();
-		} else if (am.getRouteService() == RouteProvider.RouteService.BROUTER) {
+		} else if (am.getRouteService() == RouteService.BROUTER) {
 			screen.addPreference(fastRoute);
 			setupTimeConditionalRoutingPref();
-		} else if (am.getRouteService() == RouteProvider.RouteService.STRAIGHT) {
+		} else if (am.getRouteService() == RouteService.STRAIGHT) {
 			Preference straightAngle = new Preference(app.getApplicationContext());
 			straightAngle.setPersistent(false);
 			straightAngle.setKey(settings.ROUTE_STRAIGHT_ANGLE.getId());

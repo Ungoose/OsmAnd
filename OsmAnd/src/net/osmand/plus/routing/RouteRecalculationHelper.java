@@ -207,7 +207,7 @@ class RouteRecalculationHelper {
 			params.mode = mode;
 			params.ctx = app;
 			boolean updateProgress = false;
-			if (params.mode.getRouteService() == RouteProvider.RouteService.OSMAND) {
+			if (params.mode.getRouteService() == RouteService.OSMAND) {
 				params.calculationProgress = new RouteCalculationProgress();
 				updateProgress = true;
 			} else {
